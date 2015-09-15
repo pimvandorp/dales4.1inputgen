@@ -16,13 +16,13 @@ import os.path
 #                         1  Input            
 #-----------------------------------------------------------------
 
-exptitle = 'JHU-LES_fturx_only'
-expnr = '001'
+exptitle = 'XY_JHU-LES'
+expnr = '010'
 
 casetitle = 'Gabls1'
 casesubtitle = 'Ref_Dales4'
 
-lesversion = 'JHU-LES'
+lesversion = 'XY_JHU-LES'
 
 #-----------------------------------------------------------------
 #                     1.1 General input            
@@ -33,11 +33,11 @@ nprocx = 8 # number of cpu's in x-direction
 nprocy = 1 # number of cpu's in y-direction
 
 
-itot = 384 # number of grid points in x-direction
+itot = 512 # number of grid points in x-direction
 jtot = 32 # number of grid points in y-direction
 kmax = 64 # number of grid points in z-direction
 
-xsize = 2400 # size of domain in x-direction [m]
+xsize = 3200 # size of domain in x-direction [m]
 ysize = 200  # size of domain in y-direction [m]
 
 dz = 0 # grid spacing in z-direction [m] (set 0 if zmax is defined)
