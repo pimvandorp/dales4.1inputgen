@@ -5,15 +5,15 @@ from numpy import *
 import matplotlib.pyplot as plt
 
 ########### area factor matrix ###########
-def areafacgen(turbr,dy,diag=False):
+def areafacgen(turr,dy,diag=False):
 
-    turbrgr = int(turbr/dy)
-    gam_q4 = zeros((turbrgr,turbrgr)) #gamma of fourth quadrant 
+    turrgr = int(round(turr/dy))
+    gam_q4 = zeros((turrgr,turrgr)) #gamma of fourth quadrant 
 
-    for k in range(0,turbrgr):
-        for j in range(0,turbrgr):
+    for k in range(0,turrgr):
+        for j in range(0,turrgr):
             y = linspace(j,j+1,num=100)
-            z = (turbrgr**2-y**2)**0.5 - k
+            z = (turrgr**2-y**2)**0.5 - k
             for i in range(0,len(z)):
                 if z[i] > 1:
                     z[i] = 1
@@ -33,7 +33,7 @@ def areafacgen(turbr,dy,diag=False):
         print gam
 
         plt.contourf(gam)
-        plt.axis([0,2*turbrgr,0,2*turbrgr])
+        plt.axis([0,2*turrgr,0,2*turrgr])
         plt.colorbar()
         plt.show()
 
@@ -41,12 +41,12 @@ def areafacgen(turbr,dy,diag=False):
         fig = plt.gcf()
         ax = fig.gca()
 
-        circle = plt.Circle((0,0),turbrgr)
+        circle = plt.Circle((0,0),turrgr)
 
         ax.add_artist(circle)
-        plt.axis([0,turbrgr,0,turbrgr])
-        plt.xticks(arange(0,turbrgr))
-        plt.yticks(arange(0,turbrgr))
+        plt.axis([0,turrgr,0,turrgr])
+        plt.xticks(arange(0,turrgr))
+        plt.yticks(arange(0,turrgr))
         plt.grid(which='major',alpha=1)
         ax.set_autoscale_on(False)
         plt.show()

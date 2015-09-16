@@ -17,7 +17,7 @@ import os.path
 #-----------------------------------------------------------------
 
 exptitle = 'XY_JHU-LES'
-expnr = '010'
+expnr = '200'
 
 casetitle = 'Gabls1'
 casesubtitle = 'Ref_Dales4'
@@ -68,9 +68,10 @@ xtime = 0
 turbine = True # enable wind turbine
 Ct = 1.33 # modified thrust coefficient Ct' for JHU-LES [-] (Betz limit = 2) 
 tau = 60 # time constant of exponential wind velocity smoothing [s]
-turbh = 100 # turbine hubheight [m]
-turbr = 50 # turbine radius [m]
-turbloc = 100 # x-location of turbine [m]
+turhx = 400 # turbine hub x-position [m]
+turhy = 100 # turbine hub y-position [m]
+turhz = 80 # turbine hub z-position [m]
+turr = 40 # turbine radius [m]
 
 #-----------------------------------------------------------------
 #                   2 Define and make folders         
@@ -320,9 +321,9 @@ for i in range(0,nt4):
 #-----------------------------------------------------------------
 
 if turbine == True:
-    dy = ysize/jtot # grid spacing (equidistant grid is assumed and required)
+    dy = ysize/float(jtot) # grid spacing (equidistant grid is assumed and required)
 
-    gamma = dlsin.areafacgen(turbr=turbr,dy=dy)['gamma'] 
+    gamma = dlsin.areafacgen(turr=turr,dy=dy)['gamma'] 
 
     headerwindturbine = 'Area factor matrix gamma(j,k)'
     dlsin.w2f2(gamma,'gamma.inp',headerwindturbine,casedir,exptitle,casetitle)
@@ -371,9 +372,11 @@ with open(expdir + '/namoptions.%s' % expnr, 'w') as nam:
         nam.write('&WINDTURBINE\n')
         nam.write('{0:<12}'.format('Ct')+'=  '+'%s\n' % Ct)
         nam.write('{0:<12}'.format('tau')+'=  '+'%s\n' % tau)
-        nam.write('{0:<12}'.format('turbh')+'=  '+'%s\n' % turbh)
-        nam.write('{0:<12}'.format('turbr')+'=  '+'%s\n' % turbr)
-        nam.write('{0:<12}'.format('turbloc')+'=  '+'%s\n/\n\n' % turbloc)
+        nam.write('{0:<12}'.format('turhx')+'=  '+'%s\n' % turhx)
+        nam.write('{0:<12}'.format('turhy')+'=  '+'%s\n' % turhy)
+        nam.write('{0:<12}'.format('turhz')+'=  '+'%s\n' % turhz)
+        nam.write('{0:<12}'.format('turr')+'=  '+'%s\n/\n\n' % turr)
+
 
     nam.write('&DOMAIN\n') 
     nam.write('{0:<12}'.format('itot')+'=  '+'%s\n' % itot)
