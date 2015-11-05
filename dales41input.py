@@ -77,45 +77,45 @@ def height(kmax,zmax=0,dz=0):
     return h
 
 ########### write to files prof.inp, lscale.inp and scalar.inp ########### 
-def w2f1(data,filename,header,casedir,exptitle,casetitle,casesubtitle,kmax):
-    
-    mn = shape(data)
-    m = mn[0]
-    n = mn[1]
-    for i in range(0,m):
-        for j in range(0,n):
-            data[i,j] = '{0:.3f}'.format(data[i,j])
-          
+def writeprof(data,filename,header,casedir,exptitle,casetitle,casesubtitle,kmax):
     
     with open('%s/%s' % (casedir,filename),'w') as x:
         x.write('%s %s %s %s\n' % (exptitle,casetitle,casesubtitle,filename))
         for item in header:
-            x.write('{0:>12}'.format('%s' %item))
+            x.write('{0:>12}'.format(item))
         x.write('\n')
         for i in range(0,kmax):
-            for item in data[i,:]:
-                x.write('{0:>12}'.format(str(item).ljust(8,'0')))
+            for item in data[i,:2]:
+                x.write('{:>12.3f}'.format(item))
+            x.write('{:>12.3e}'.format(data[i,2]))
+            for item in data[i,3:]:
+                x.write('{:>12.3f}'.format(item))
             x.write('\n')
 
+def writelscale(data,filename,header,casedir,exptitle,casetitle,casesubtitle,kmax):
+    
+    with open('%s/%s' % (casedir,filename),'w') as x:
+        x.write('%s %s %s %s\n' % (exptitle,casetitle,casesubtitle,filename))
+        for item in header:
+            x.write('{0:>12}'.format(item))
+        x.write('\n')
+        for i in range(0,kmax):
+            for item in data[i,:3]:
+                x.write('{:>12.3f}'.format(item))
+            for item in data[i,3:]:
+                x.write('{:>12.3e}'.format(item))
+            x.write('\n')
 
 ########### write to windturbine.inp ########### 
 def w2f2(data,filename,header,casedir,casetitle,casesubtitle):
     
-    mn = shape(data)
-    m = mn[0]
-    n = mn[1]
-    for i in range(0,m):
-        for j in range(0,n):
-            data[i,j] = '{0:.3f}'.format(data[i,j])
-          
-    
     with open('%s/%s' % (casedir,filename),'w') as x:
         x.write('%s %s %s\n' % (casetitle,casesubtitle,filename))
-        x.write('{0:>12}'.format('%s' %header))
+        x.write('{0:>12}'.format(header))
         x.write('\n')
         for i in range(0,m):
             for item in data[i,:]:
-                x.write('{0:>12}'.format(str(item).ljust(8,'0')))
+                x.write('{0:>12.3f}'.format(item))
             x.write('\n')
 
 
