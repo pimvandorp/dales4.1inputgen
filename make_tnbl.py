@@ -11,6 +11,7 @@ import numpy as np
 import dales41input as dlsin
 import os
 import os.path
+import math as m
 
 #-----------------------------------------------------------------
 #                           1  General input            
@@ -19,18 +20,23 @@ import os.path
 username = 'pim'
 
 exptitle = 'Single_turbine_NBL'
-expnr = '200'
+expnr = '204'
 
 casetitle = 'NBL' 
-casesubtitle = 'NBL_ref'
+casesubtitle = 'NBL_TNBL_higherdomain'
 
-newcase = True 
+newcase = False 
 sourcecasetitle = 'Gabls1'
 sourcecasesubtitle = 'Ref_Dales4'
 
 lesversion = 'PVD_WINDFARM'
 
 ncpu = 8
+
+ugeo = 8*m.cos(3.14/9.)
+vgeo = -8*m.sin(3.14/9.)
+
+hour = 3600
 
 #-----------------------------------------------------------------
 #                          2 Namoptions
@@ -39,8 +45,8 @@ ncpu = 8
 #----RUN----
 lwarmstart = 'false'
 startfile = 'initd06h00m000.017'
-runtime = 32400  
-dtmax = 1.0 
+runtime = 11*hour  
+dtmax = 3.0 
 ladaptive = 'true' 
 n_scalar = 0 
 nprocx = 0
@@ -49,13 +55,13 @@ dtav_glob = 60
 timeav_glob = 600.
 
 #----DOMAIN----
-itot = 64
-jtot = 64
-kmax = 64 
+itot = 336
+jtot = 96
+kmax = 100 
 
-xsize = 400
-ysize = 400
-zsize = 400 
+xsize = 2100
+ysize = 600
+zsize = 1000 
 
 xlat = 73.
 xlon = 0
@@ -64,6 +70,14 @@ xtime = 0
 
 #----PHYSICS----
 ltimedep = 'false'
+isurf = 4
+wtsurf = 0.
+
+#----NAMSURFACE----
+lneutral = 'true'
+
+#----NAMSUBGRID----
+lmason = 'false'
 
 #----DYNAMICS----
 cu = 7 
@@ -96,7 +110,7 @@ dtavstattend = 60
 timeavstattend = 600.
 
 #----WINDTURBINE----
-turbine = False 
+turbine = True 
 ntur = 1
 luniformadm = 'false'
 tura = 0.25 
@@ -104,11 +118,11 @@ lnonuniformadm = 'true'
 N_an = 5 
 tipspeedr = 9 
 
-Tsettur = 7200 
+Tsettur = 8*hour 
 TVdavg = 600 
 Tyaw = 600 
 
-ldiagn = 'true'
+ldiagn = 'false'
 Tchktur = 30 
 Tturdata = 1
 
@@ -116,9 +130,9 @@ intA = 3
 m_int = 20
 n_int = 20
 
-smthcoefax = 2.3 
-smthcoefrad = 2 
-smthcoefannu = 2
+smthcoefax = 2.3
+smthcoefrad = 1.5
+smthcoefannu = 1.5
 
 if turbine:
     cu = cv = 0
@@ -127,8 +141,8 @@ if turbine:
 #                        3 Windfarmdata.inp
 #-----------------------------------------------------------------
 
-turhx = 0.5*xsize
-turhy = 0.5*ysize
+turhx = 100
+turhy = 300
 turhz = 100
 
 turr = 50
@@ -207,15 +221,15 @@ if newcase==True:
     # column 0 (height)
     profinp[:,0] = h[:]
     # column 1 (liquid water potential temperature)
-    profinp[:,1] = 305.
+    profinp[:,1] = 300.
     # colum 2 (total humidity)
     profinp[:,2] = 0. 
     # column 3 (horizontal wind velocity)
-    profinp[:,3] = 8.
+    profinp[:,3] = ugeo
     # column 4 (vertical wind velocity)
-    profinp[:,4] = 0.
+    profinp[:,4] = vgeo
     # column 5 (sgs tke)
-    profinp[:,5] = profinpin[:kmax,5]
+    profinp[:64,5] = profinpin[:64,5]
 
     dlsin.writeprof(profinp,'prof.inp',headerprof,casedir,exptitle,casetitle,casesubtitle,kmax)
 
@@ -232,9 +246,9 @@ if newcase==True:
     # column 0 (height)
     lscaleinp[:,0] = h[:]
     # column 1 (geostrophic wind in x-direction)
-    lscaleinp[:,1] = 8.
+    lscaleinp[:,1] = ugeo
     # column 2 (geostrophic wind in y-direction)
-    lscaleinp[:,2] = 0.
+    lscaleinp[:,2] = vgeo
     # column 3 (ls subsidence)
     lscaleinp[:,3] = 0.
     # column 4 (ls inflow of moisture in x-direction)
@@ -317,14 +331,17 @@ with open(expdir + '/namoptions.%s' % expnr, 'w') as nam:
     nam.write('{0:<12}'.format('z0')+'=  '+'0.1\n')
     nam.write('{0:<12}'.format('ustin')+'=  '+'0.23\n')
     nam.write('{0:<12}'.format('ps')+'=  '+'101250.00\n')
-    nam.write('{0:<12}'.format('thls')+'=  '+'305.\n')
-    nam.write('{0:<12}'.format('wtsurf')+'=  '+'0.\n')
+    nam.write('{0:<12}'.format('thls')+'=  '+'300.\n')
+    nam.write('{0:<12}'.format('wtsurf')+'=  '+'%s\n' % wtsurf)
     nam.write('{0:<12}'.format('wqsurf')+'=  '+'0.0\n')
     nam.write('{0:<12}'.format('lmoist')+'=  '+'.false.\n')
-    nam.write('{0:<12}'.format('isurf')+'=  '+'2\n')
+    nam.write('{0:<12}'.format('isurf')+'=  '+'%s\n' % isurf )
     nam.write('{0:<12}'.format('irad')+'=  '+'0\n')
     nam.write('{0:<12}'.format('lcoriol')+'=  '+'.true.\n')
     nam.write('{0:<12}'.format('ltimedep')+'=  '+'.%s.\n/\n\n' % ltimedep)
+
+    nam.write('&NAMSURFACE\n') 
+    nam.write('{0:<12}'.format('lneutral')+'=  '+'.%s.\n/\n\n' % lneutral)
 
     nam.write('&DYNAMICS\n') 
     nam.write('{0:<12}'.format('llsadv')+'=  '+'.false.\n')
@@ -338,7 +355,8 @@ with open(expdir + '/namoptions.%s' % expnr, 'w') as nam:
     nam.write('{0:<12}'.format('iadv_sv')+'=  '+'2\n/\n\n')
 
     nam.write('&NAMSUBGRID\n') 
-    nam.write('{0:<12}'.format('ldelta')+'=  '+'.true.\n/\n\n')
+    nam.write('{0:<12}'.format('ldelta')+'=  '+'.true.\n')
+    nam.write('{0:<12}'.format('lmason')+'=  '+'.%s.\n/\n\n' % lmason)
 
     nam.write('&NAMBUDGET\n') 
     nam.write('{0:<12}'.format('lbudget')+'=  '+'.true.\n')

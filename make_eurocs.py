@@ -11,6 +11,7 @@ import numpy as np
 import dales41input as dlsin
 import os
 import os.path
+import math as m
 
 #-----------------------------------------------------------------
 #                           1  General input            
@@ -19,18 +20,24 @@ import os.path
 username = 'pim'
 
 exptitle = 'Single_turbine_EUROCS'
-expnr = '400'
+expnr = '402'
 
 casetitle = 'EUROCS_turbine' 
-casesubtitle = 'EUROCS_ref'
+casesubtitle = 'EUROCS_lowmoist'
 
-newcase = False 
+newcase = True 
 sourcecasetitle = 'Cases_Stephan' 
 sourcecasesubtitle = 'H046_Eurocs'
 
 lesversion = 'PVD_WINDFARM'
 
 ncpu = 8
+
+Ugeo = 6
+u = Ugeo*m.cos(3.14/9.)
+v = -Ugeo*m.sin(3.14/9.)
+
+hour = 3600
 
 #-----------------------------------------------------------------
 #                          2 Namoptions
@@ -39,7 +46,7 @@ ncpu = 8
 #----RUN----
 lwarmstart = 'false'
 startfile = 'initd06h00m000.017'
-runtime = 133200 # 37 hour  
+runtime = 37*hour  
 dtmax = 3.0 
 ladaptive = 'true' 
 n_scalar = 0 
@@ -64,10 +71,11 @@ xtime = 8.
 
 #----PHYSICS----
 ltimedep = 'false'
+lmoist = 'true'
 
 #----DYNAMICS----
-cu = 3.4 
-cv = -4.9 
+cu = u-1 
+cv = 0 
 
 #----NAMRADSTAT----
 dtavrad = 60
@@ -131,8 +139,8 @@ if turbine:
 #                        3 Windfarmdata.inp
 #-----------------------------------------------------------------
 
-turhx = 0.5*xsize
-turhy = 0.5*ysize
+turhx = xsize-100
+turhy = 100
 turhz = 100
 
 turr = 50
@@ -212,14 +220,13 @@ if newcase==True:
     # column 0 (height)
     profinp[:,0] = h[:]
     # column 1 (liquid water potential temperature)
-    #profinp[:,1] = flipud(profinpin[:,1])
     profinp[:,1] = profinpin[:kmax,1]
     # colum 2 (total humidity)
-    profinp[:,2] = profinpin[:kmax,2]
+    profinp[:,2] = 0.001#profinpin[:kmax,2]
     # column 3 (horizontal wind velocity)
-    profinp[:,3] = profinpin[:kmax,3]
+    profinp[:,3] = u #profinpin[:kmax,3]
     # column 4 (vertical wind velocity)
-    profinp[:,4] = profinpin[:kmax,4]
+    profinp[:,4] = v #profinpin[:kmax,4]
     # column 5 (sgs tke)
     profinp[:,5] = profinpin[:kmax,5]
 
@@ -238,9 +245,9 @@ if newcase==True:
     # column 0 (height)
     lscaleinp[:,0] = h[:]
     # column 1 (geostrophic wind in x-direction)
-    lscaleinp[:,1] = lscaleinpin[:kmax,1]
+    lscaleinp[:,1] = u #lscaleinpin[:kmax,1]
     # column 2 (geostrophic wind in y-direction)
-    lscaleinp[:,2] = lscaleinpin[:kmax,2]
+    lscaleinp[:,2] = v #lscaleinpin[:kmax,2]
     # column 3 (ls subsidence)
     lscaleinp[:,3] = lscaleinpin[:kmax,3]
     # column 4 (ls inflow of moisture in x-direction)
@@ -321,7 +328,7 @@ with open(expdir + '/namoptions.%s' % expnr, 'w') as nam:
     nam.write('&PHYSICS\n') 
     nam.write('{0:<12}'.format('ps')+'=  '+'101250.00\n')
     nam.write('{0:<12}'.format('thls')+'=  '+'288.\n')
-    nam.write('{0:<12}'.format('lmoist')+'=  '+'.true.\n')
+    nam.write('{0:<12}'.format('lmoist')+'=  '+'.%s.\n' % lmoist)
     nam.write('{0:<12}'.format('lcoriol')+'=  '+'.true.\n')
     nam.write('{0:<12}'.format('iradiation')+'=  '+'2\n')
     nam.write('{0:<12}'.format('irad')+'=  '+'4\n')

@@ -19,12 +19,12 @@ import os.path
 username = 'pim'
 
 exptitle = 'Single_turbine_CBL'
-expnr = '350'
+expnr = '355'
 
 casetitle = 'CBL_turbine' 
 casesubtitle = 'CBL_S024'
 
-newcase = True 
+newcase = False 
 sourcecasetitle = 'Cases_Stephan' 
 sourcecasesubtitle = 'E345_TERAS'
 
@@ -35,11 +35,12 @@ ncpu = 8
 #-----------------------------------------------------------------
 #                          2 Namoptions
 #-----------------------------------------------------------------
+hour = 3600
 
 #----RUN----
 lwarmstart = 'false'
 startfile = 'initd06h00m000.017'
-runtime = 36000  
+runtime = 6*hour  
 dtmax = 3.0 
 ladaptive = 'true' 
 n_scalar = 0 
@@ -49,8 +50,8 @@ dtav_glob = 60
 timeav_glob = 600.
 
 #----DOMAIN----
-itot = 64 #160
-jtot = 64 #160
+itot = 160 #64
+jtot = 160 #64
 kmax = 112
 
 xsize = 2000
@@ -100,7 +101,7 @@ dtavstattend = 60
 timeavstattend = 600.
 
 #----WINDTURBINE----
-turbine = False 
+turbine = True 
 ntur = 1
 luniformadm = 'false'
 tura = 0.25 
@@ -108,7 +109,7 @@ lnonuniformadm = 'true'
 N_an = 5 
 tipspeedr = 9 
 
-Tsettur = 10800. 
+Tsettur = 3*hour
 TVdavg = 600 
 Tyaw = 600 
 
@@ -120,9 +121,9 @@ intA = 3
 m_int = 20
 n_int = 20
 
-smthcoefax = 2.3 
-smthcoefrad = 2 
-smthcoefannu = 2
+smthcoefax = 1.5
+smthcoefrad = 1.5
+smthcoefannu = 1.5
 
 if turbine:
     cu = cv = 0

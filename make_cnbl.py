@@ -1,7 +1,7 @@
 #!/usr/bin/python
-# Filename: make_cbl.py
+# Filename: make_gabls.py
 # By Pim van Dorp, TU Delft, section Atmospheric Physics, 1 nov 2015
-# Description: Generate input files, jobscript and namoptions for DALES 4.1 of a CBL case
+# Description: Generate input files, jobscript and namoptions for DALES 4.1 of the GABLS case
 
 #-----------------------------------------------------------------
 #                  0 Import Python packages             
@@ -11,6 +11,7 @@ import numpy as np
 import dales41input as dlsin
 import os
 import os.path
+import math as m
 
 #-----------------------------------------------------------------
 #                           1  General input            
@@ -18,19 +19,22 @@ import os.path
 
 username = 'pim'
 
-exptitle = 'Single_turbine_CBL'
-expnr = '305'
+exptitle = 'Single_turbine_NBL'
+expnr = '253'
 
-casetitle = 'CBL_turbine' 
-casesubtitle = 'CBL_W06'
+casetitle = 'NBL' 
+casesubtitle = 'NBL_CNBL'
 
 newcase = False 
-sourcecasetitle = 'Cases_Stephan' 
-sourcecasesubtitle = 'E345_TERAS'
+sourcecasetitle = 'Gabls1'
+sourcecasesubtitle = 'Ref_Dales4'
 
 lesversion = 'PVD_WINDFARM'
 
 ncpu = 8
+
+ugeo = 8*m.cos(3.14/9.)
+vgeo = -8*m.sin(3.14/9.)
 
 hour = 3600
 
@@ -41,7 +45,7 @@ hour = 3600
 #----RUN----
 lwarmstart = 'false'
 startfile = 'initd06h00m000.017'
-runtime = 6*hour  
+runtime = 11*hour  
 dtmax = 3.0 
 ladaptive = 'true' 
 n_scalar = 0 
@@ -51,29 +55,33 @@ dtav_glob = 60
 timeav_glob = 600.
 
 #----DOMAIN----
-itot = 160
-jtot = 160
-kmax = 112
+itot = 336 
+jtot = 96
+kmax = 100 
 
-xsize = 2000
-ysize = 2000
-zsize = 1945 
+xsize = 2100
+ysize = 600
+zsize = 1000 
 
-xlat = 33.3
+xlat = 73.
 xlon = 0
 xday = 0
 xtime = 0
 
 #----PHYSICS----
 ltimedep = 'false'
+isurf = 4
+wtsurf = 0.
+
+#----NAMSURFACE----
+lneutral = 'true'
+
+#----NAMSUBGRID----
+lmason = 'false'
 
 #----DYNAMICS----
-cu = 7
-cv = 0
-
-#----NAMRADSTAT----
-dtavrad = 60
-timeavrad = 600.
+cu = 0.
+cv = 0.
 
 #----NAMBUDGET----
 dtavbudget = 60
@@ -110,7 +118,7 @@ lnonuniformadm = 'true'
 N_an = 5 
 tipspeedr = 9 
 
-Tsettur = 3*hour 
+Tsettur = 8*hour 
 TVdavg = 600 
 Tyaw = 600 
 
@@ -122,8 +130,8 @@ intA = 3
 m_int = 20
 n_int = 20
 
-smthcoefax = 1.5
-smthcoefrad = 1.5
+smthcoefax = 2.3
+smthcoefrad = 1.5 
 smthcoefannu = 1.5
 
 if turbine:
@@ -133,8 +141,8 @@ if turbine:
 #                        3 Windfarmdata.inp
 #-----------------------------------------------------------------
 
-turhx = 0.5*xsize
-turhy = 0.5*ysize
+turhx = 100
+turhy = 300
 turhz = 100
 
 turr = 50
@@ -193,23 +201,12 @@ else:
 #-----------------------------------------------------------------
 
 if newcase==True:
-    n = np.arange(1,kmax+1)
-    h = np.zeros((kmax))
-    zmax = 0
-    i=0
-    while zmax<1940:
-        if n[i]<=21:
-            deltaz = 10
-        elif n[i]>21 and n[i]<=41:
-            deltaz = 10 + (n[i]-20)*0.5
-        else:
-            deltaz = 20
-        if i==0:
-            h[i]=deltaz*0.5
-        else:
-            h[i] = h[i-1]+deltaz
-        zmax = h[i]
-        i += 1
+    h = dlsin.height(kmax, zsize) 
+
+    def readinpfiles(case,subcase,username='pim'):
+        path = '/home/%s/Les/Cases/%s/%s/' % (username, case, subcase)
+        lscaleinp = np.loadtxt(path + 'lscale.inp',skiprows=2)
+        return {'lscale.inp': lscaleinp}
 
 #-----------------------------------------------------------------
 #                          5.1 prof.inp
@@ -219,22 +216,27 @@ if newcase==True:
 
     profinp = np.zeros((kmax,6))
 
+    profinpin = dlsin.readprofinp(case=sourcecasetitle,subcase=sourcecasesubtitle)['prof.inp'] 
+
     # column 0 (height)
     profinp[:,0] = h[:]
     # column 1 (liquid water potential temperature)
     for i,v in enumerate(h):
-        if v <=740:
+        if i <=49:
             profinp[i,1]=300.0
+        elif i>49 and i<=49+10:
+            profinp[i,1]=300.0 + (2.5/100.)*(v-495)
         else:
-            profinp[i,1]=300.0+(0.003)*(v-740)
+            profinp[i,1] = 302.5 + 0.001*(v-595)
     # colum 2 (total humidity)
-    profinp[:,2] = 0
+    profinp[:,2] = 0. 
     # column 3 (horizontal wind velocity)
-    profinp[:,3] = 8.
+    profinp[:,3] = ugeo
     # column 4 (vertical wind velocity)
-    profinp[:,4] = 0.
+    profinp[:,4] = vgeo
     # column 5 (sgs tke)
     profinp[:,5] = 0
+    profinp[:len(profinpin[:,5]),5] = profinpin[:,5]
 
     dlsin.writeprof(profinp,'prof.inp',headerprof,casedir,exptitle,casetitle,casesubtitle,kmax)
 
@@ -246,12 +248,14 @@ if newcase==True:
 
     lscaleinp = np.zeros((kmax,8))
 
+    lscaleinpin = readinpfiles(case=sourcecasetitle,subcase=sourcecasesubtitle)['lscale.inp']
+
     # column 0 (height)
     lscaleinp[:,0] = h[:]
     # column 1 (geostrophic wind in x-direction)
-    lscaleinp[:,1] = 8.
+    lscaleinp[:,1] = ugeo
     # column 2 (geostrophic wind in y-direction)
-    lscaleinp[:,2] = 0.
+    lscaleinp[:,2] = vgeo
     # column 3 (ls subsidence)
     lscaleinp[:,3] = 0.
     # column 4 (ls inflow of moisture in x-direction)
@@ -280,6 +284,7 @@ with open('%s/windfarmdata.inp.%s' % (expdir,expnr),'w') as x:
         for item in windfarmdata[i,:]:
             x.write('{:>15.3f}'.format(item))
         x.write('\n')
+
 
 #-----------------------------------------------------------------
 #                     7 Generate jobscript
@@ -313,7 +318,7 @@ with open(expdir + '/namoptions.%s' % expnr, 'w') as nam:
     nam.write('{0:<12}'.format('ladaptive')+'=  '+'.%s.\n' % ladaptive)
     nam.write('{0:<12}'.format('irandom')+'=  '+'43\n')
     nam.write('{0:<12}'.format('randthl')+'=  '+'0.1\n')
-    nam.write('{0:<12}'.format('randqt')+'=  '+'2.5e-5\n')
+    nam.write('{0:<12}'.format('randqt')+'=  '+'0\n')
     nam.write('{0:<12}'.format('nsv')+'=  '+'%s\n' % n_scalar)
     nam.write('{0:<12}'.format('nprocx')+'=  '+'%s\n' % nprocx)
     nam.write('{0:<12}'.format('nprocy')+'=  '+'%s\n/\n\n' % nprocy)
@@ -330,47 +335,35 @@ with open(expdir + '/namoptions.%s' % expnr, 'w') as nam:
     nam.write('{0:<12}'.format('xtime')+'=  '+'%s\n/\n\n' % xtime)
 
     nam.write('&PHYSICS\n') 
+    nam.write('{0:<12}'.format('z0')+'=  '+'0.1\n')
+    nam.write('{0:<12}'.format('ustin')+'=  '+'0.23\n')
     nam.write('{0:<12}'.format('ps')+'=  '+'101250.00\n')
     nam.write('{0:<12}'.format('thls')+'=  '+'300.\n')
+    nam.write('{0:<12}'.format('wtsurf')+'=  '+'%s\n' % wtsurf)
+    nam.write('{0:<12}'.format('wqsurf')+'=  '+'0.0\n')
     nam.write('{0:<12}'.format('lmoist')+'=  '+'.false.\n')
+    nam.write('{0:<12}'.format('isurf')+'=  '+'%s\n' % isurf )
+    nam.write('{0:<12}'.format('irad')+'=  '+'0\n')
     nam.write('{0:<12}'.format('lcoriol')+'=  '+'.true.\n')
-    #nam.write('{0:<12}'.format('iradiation')+'=  '+'2\n')
-    #nam.write('{0:<12}'.format('irad')+'=  '+'0\n')
-    #nam.write('{0:<12}'.format('timerad')+'=  '+'10\n')
-    #nam.write('{0:<12}'.format('rad_longw')+'=  '+'.true.\n')
-    #nam.write('{0:<12}'.format('rad_shortw')+'=  '+'.true.\n')
-    #nam.write('{0:<12}'.format('rka')+'=  '+'130.\n')
-    #nam.write('{0:<12}'.format('dlwtop')+'=  '+'70.\n')
-    #nam.write('{0:<12}'.format('dlwbot')+'=  '+'0.\n') 
     nam.write('{0:<12}'.format('ltimedep')+'=  '+'.%s.\n/\n\n' % ltimedep)
 
     nam.write('&NAMSURFACE\n') 
-    #nam.write('{0:<12}'.format('albedoav')+'=  '+'0.05\n')
-    nam.write('{0:<12}'.format('wtsurf')+'=  '+'0.06\n')
-    nam.write('{0:<12}'.format('wqsurf')+'=  '+'0.\n') #1.366e-4
-    nam.write('{0:<12}'.format('isurf')+'=  '+'4\n')
-    #nam.write('{0:<12}'.format('ustin')+'=  '+'0.01\n')
-    nam.write('{0:<12}'.format('z0')+'=  '+'0.01\n/\n\n')
-
-    nam.write('&NAMRADSTAT\n') 
-    nam.write('{0:<12}'.format('dtav')+'=  '+'%s\n' % dtavrad)
-    nam.write('{0:<12}'.format('timeav')+'=  '+'%s\n' % timeavrad)
-    nam.write('{0:<12}'.format('lstat')+'=  '+'.true.\n/\n\n')
+    nam.write('{0:<12}'.format('lneutral')+'=  '+'.%s.\n/\n\n' % lneutral)
 
     nam.write('&DYNAMICS\n') 
     nam.write('{0:<12}'.format('llsadv')+'=  '+'.false.\n')
     nam.write('{0:<12}'.format('lqlnr')+'=  '+'.false.\n')
     nam.write('{0:<12}'.format('cu')+'=  '+'%s\n' %cu)
-    nam.write('{0:<12}'.format('cv')+'=  '+'%s\n/\n\n' %cv)
-    #nam.write('{0:<12}'.format('iadv_mom')+'=  '+'5\n')
-    #nam.write('{0:<12}'.format('iadv_tke')+'=  '+'55\n')
-    #nam.write('{0:<12}'.format('iadv_thl')+'=  '+'55\n')
-    #nam.write('{0:<12}'.format('iadv_qt')+'=  '+'55\n')
-    #nam.write('{0:<12}'.format('iadv_sv')+'=  '+'55\n/\n\n')
+    nam.write('{0:<12}'.format('cv')+'=  '+'%s\n\n' %cv)
+    nam.write('{0:<12}'.format('iadv_mom')+'=  '+'2\n')
+    nam.write('{0:<12}'.format('iadv_tke')+'=  '+'2\n')
+    nam.write('{0:<12}'.format('iadv_thl')+'=  '+'2\n')
+    nam.write('{0:<12}'.format('iadv_qt')+'=  '+'2\n')
+    nam.write('{0:<12}'.format('iadv_sv')+'=  '+'2\n/\n\n')
 
-    #nam.write('&NAMSUBGRID\n') 
-    #nam.write('{0:<12}'.format('ldelta')+'=  '+'.false.\n')
-    #nam.write('{0:<12}'.format('cn')+'=  '+'1.2\n/\n\n')
+    nam.write('&NAMSUBGRID\n') 
+    nam.write('{0:<12}'.format('ldelta')+'=  '+'.true.\n')
+    nam.write('{0:<12}'.format('lmason')+'=  '+'.%s.\n/\n\n' % lmason)
 
     nam.write('&NAMBUDGET\n') 
     nam.write('{0:<12}'.format('lbudget')+'=  '+'.true.\n')
@@ -378,11 +371,12 @@ with open(expdir + '/namoptions.%s' % expnr, 'w') as nam:
     nam.write('{0:<12}'.format('timeav')+'=  '+'%s\n/\n\n' % timeavbudget)
 
     nam.write('&NAMCHECKSIM\n') 
-    nam.write('{0:<12}'.format('tcheck')+'=  '+'%s\n/\n\n' % tcheck)
+    nam.write('{0:<12}'.format('tcheck')+'=  '+'%s\n\n' % tcheck)
 
     nam.write('&NAMSAMPLING\n')
     nam.write('{0:<12}'.format('dtav')+'=  ''%s\n' % dtavsampling)
-    nam.write('{0:<12}'.format('timeav')+'=  '+'%s\n/\n\n' % timeavsampling)
+    nam.write('{0:<12}'.format('timeav')+'=  '+'%s\n' % timeavsampling)
+    nam.write('{0:<12}'.format('lsampcl')+'=  '+'.false.\n/\n\n')
 
     nam.write('&NAMTIMESTAT\n')
     nam.write('{0:<12}'.format('ltimestat')+'=  '+'.true.\n')

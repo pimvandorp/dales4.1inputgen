@@ -11,6 +11,7 @@ import numpy as np
 import dales41input as dlsin
 import os
 import os.path
+import math as m
 
 #-----------------------------------------------------------------
 #                           1  General input            
@@ -19,7 +20,7 @@ import os.path
 username = 'pim'
 
 exptitle = 'Single_turbine_GABLS'
-expnr = '100'
+expnr = '103'
 
 casetitle = 'GABLS' 
 casesubtitle = 'GABLS_ref'
@@ -32,8 +33,10 @@ lesversion = 'PVD_WINDFARM'
 
 ncpu = 8
 
-u = 8
-v = 0
+u = 8*m.cos(3.14/9.)
+v = -8*m.sin(3.14/9.)
+
+hour = 3600
 
 #-----------------------------------------------------------------
 #                          2 Namoptions
@@ -42,7 +45,7 @@ v = 0
 #----RUN----
 lwarmstart = 'false'
 startfile = 'initd06h00m000.017'
-runtime = 32400  
+runtime = 11*hour  
 dtmax = 2.0 
 ladaptive = 'true' 
 n_scalar = 0 
@@ -52,12 +55,12 @@ dtav_glob = 60
 timeav_glob = 600.
 
 #----DOMAIN----
-itot = 256
-jtot = 128
+itot = 336
+jtot = 96
 kmax = 64 
 
-xsize = 1600
-ysize = 800
+xsize = 2100
+ysize = 600
 zsize = 400 
 
 xlat = 73.
@@ -107,7 +110,7 @@ lnonuniformadm = 'true'
 N_an = 5 
 tipspeedr = 9 
 
-Tsettur = 0 
+Tsettur = 8*hour 
 TVdavg = 600 
 Tyaw = 600 
 
@@ -120,8 +123,8 @@ m_int = 20
 n_int = 20
 
 smthcoefax = 2.3 
-smthcoefrad = 2 
-smthcoefannu = 2
+smthcoefrad = 1.5 
+smthcoefannu = 1.5
 
 if turbine:
     cu = cv = 0
@@ -131,7 +134,7 @@ if turbine:
 #-----------------------------------------------------------------
 
 turhx = 100
-turhy = 400
+turhy = 300
 turhz = 100
 
 turr = 50
